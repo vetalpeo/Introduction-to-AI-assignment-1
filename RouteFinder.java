@@ -1,4 +1,6 @@
-package searchpractice;
+package mainprogram;
+
+import java.util.Arrays;
 
 import robocode.control.BattleSpecification;
 import robocode.control.BattlefieldSpecification;
@@ -8,7 +10,7 @@ import robocode.control.RobotSpecification;
 
 public class RouteFinder {
 
-	private static final String ROBOCODEPATH = "/home/frizio/robocode";
+	private static final String ROBOCODEPATH = "/robocode";
 	
 	
 	public static void main(String[] args) {
@@ -26,8 +28,9 @@ public class RouteFinder {
 		/******************************* Create the battlefield ************************************/
 		
 		// Create the battlefield (a grid of 800 x 600) ???????????????
-		int NumPixelRows= 800; //8 * 64;
-		int NumPixelCols= 600; //8 * 64;
+		int NumPixelRows= 800; //12.5 * 64;
+		int NumPixelCols= 600; //9.375 * 64;
+
 		BattlefieldSpecification battlefield = new BattlefieldSpecification(NumPixelRows, NumPixelCols);
 		
 		/*******************************************************************************************/
@@ -40,9 +43,18 @@ public class RouteFinder {
 		double gunCoolingRate = 1.0;
 		int sentryBorderSize = 50;
 		boolean hideEnemyNames = false;
+
+		//size of tile and half tile
+		int TileSize=64;
+		int HalfTile=TileSize/2;
 		
-		// TODO : calculate them
-		int NumObstacles = 2; 
+		//calculate the number of tiles on battlefield
+		int NumTileRows = (int) (NumPixelRows / TileSize); //if number of rows not an integer, truncate it
+		int NumTileCols = (int) (NumPixelCols / TileSize); //if number of columns not an integer, truncate it
+		
+		// calculate the number of obstacles
+		double SittingDuckPercentage = .30;
+		int NumObstacles = (int) (NumTileRows * NumTileCols * SittingDuckPercentage) ; //if Number of obstacles not an integer, truncate it 
 		
 		/******************************* Create obstacles *********************************/
 		// Create obstacles and place them at random,
@@ -51,8 +63,7 @@ public class RouteFinder {
 		
 		// ????????????? ask to prof
 		System.out.println("Robot creation...");
-		RobotSpecification[] modelRobots = 
-				engine.getLocalRepository("sample.SittingDuck.searchpractice.RouteBot*");
+		RobotSpecification[] modelRobots = engine.getLocalRepository("sample.SittingDuck.searchpractice.RouteBot*");
 		System.out.println("Robot created!");
 		System.out.println(modelRobots.toString());
 		
@@ -64,26 +75,52 @@ public class RouteFinder {
 		for ( int NdxObstacle=0; NdxObstacle < NumObstacles; NdxObstacle++ ) {
 			
 			// TODO : something
-			
-			double InitialObstacleRow = 100.00;  // 0 + (int) (Math.random() * NumPixelRows); 
-			double InitialObstacleCol = 100.00; // 0 + (int) (Math.random() * NumPixelCols);
+			RobotSetup TempValue;
+			do {
+				// we select a random tile...
+				int InitialTileRow = (int) (Math.random() * NumTileRows); //Tile row 
+				int InitialTileCol = (int) (Math.random() * NumTileCols); //Tile column
+				
+				// ...and convert its coordinates to pixels
+				double InitialObstacleRow = InitialTileRow * TileSize + HalfTile ;
+				double InitialObstacleCol = InitialTileCol * TileSize + HalfTile ;
+				
+				//store it on a temp RobotSetup object
+				TempValue= new RobotSetup(InitialObstacleRow, InitialObstacleCol, 0.0);
 
+			} while (Arrays.asList(robotSetups).contains(TempValue));  // we check if the position has already been used before
+			
 			existingRobots[NdxObstacle] = modelRobots[0];
-			robotSetups[NdxObstacle] = new RobotSetup(InitialObstacleRow, InitialObstacleCol, 0.0);
+			robotSetups[NdxObstacle] = TempValue; //new RobotSetup(InitialObstacleRow, InitialObstacleCol, 0.0);
+			
 		}
+			
+			
 		
 		/********************************** Create the agent ************************************/
 		// Create the agent and place it in a random position without obstacle
 
 		existingRobots[NumObstacles] = modelRobots[NumObstacles + 1];
 		
-		// TODO : place it in random position ...
-		double InitialAgentRow  = 5.0; 
-		double InitialAgentCol = 5.0; 
 		
-		// ??????????????????? ask to prof
-		robotSetups[NumObstacles] = new RobotSetup(InitialAgentRow, InitialAgentCol, 0.0);
+		// place it in random position ...
+		RobotSetup TempValue;
+		do{
+			// 	we select a random tile...
+			int InitialTileRow = (int) (Math.random() * NumTileRows); //Tile row 
+			int InitialTileCol = (int) (Math.random() * NumTileCols); //Tile column
+		
+			// ...and convert its coordinates to pixels
+			double InitialAgentRow = InitialTileRow * TileSize + HalfTile ; 
+			double InitialAgentCol = InitialTileCol * TileSize + HalfTile ; 
 
+			//store it on a temp RobotSetup object
+			TempValue= new RobotSetup(InitialAgentRow, InitialAgentCol, 0.0);
+
+		} while (Arrays.asList(robotSetups).contains(TempValue));  // we check if the position has already been used before		
+		
+		//This positions the agent in the initial position
+		robotSetups[NumObstacles] = TempValue; /*new RobotSetup(InitialAgentRow, InitialAgentCol, 0.0);*/
 		/************************* Create and run the battle *************************************/
 		
 		// Create the battle
