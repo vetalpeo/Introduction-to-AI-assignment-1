@@ -31,7 +31,8 @@ public class RouteFinder {
 		int NumPixelRows= 800; //12.5 * 64;
 		int NumPixelCols= 600; //9.375 * 64;
 		int VerticalOffset = NumPixelCols % 64; //we use this to place the robots on the shown squares of the grid
-		
+												//as the shown grid starts on the top left corner of the battlefield 
+												//and the references start at the bottom left corner
 		BattlefieldSpecification battlefield = new BattlefieldSpecification(NumPixelRows, NumPixelCols);
 		
 		/*******************************************************************************************/
@@ -54,7 +55,7 @@ public class RouteFinder {
 		int NumTileCols = (int) (NumPixelCols / TileSize); //if number of columns not an integer, truncate it
 		
 		// calculate the number of obstacles
-		double SittingDuckPercentage = .3;
+		double SittingDuckPercentage = 0.30;
 		int NumObstacles = (int) (NumTileRows * NumTileCols * SittingDuckPercentage) ; //if Number of obstacles not an integer, truncate it 
 		
 		/******************************* Create obstacles *********************************/
@@ -64,7 +65,9 @@ public class RouteFinder {
 		
 		// ????????????? ask to prof
 		System.out.println("Robot creation...");
-		RobotSpecification[] modelRobots = engine.getLocalRepository("sample.SittingDuck");//.searchpractice.RouteBot*");
+		RobotSpecification[] modelRobots = engine.getLocalRepository("sample.SittingDuck"); //.searchpractice.RouteBot*");
+																							// this line was clipped as sample.SittingDuck.searchpractice.RouteBot*
+																							// didn't work, no tanks were shown on battlefield. Maybe we need to create it
 		System.out.println("Robot created!");
 		System.out.println(modelRobots.toString());
 		
@@ -77,10 +80,12 @@ public class RouteFinder {
 			
 			// TODO : something
 			RobotSetup TempValue; //used to store robots until we confirm they are placed on an empty place of the bettlefield
+			int InitialTileRow;
+			int InitialTileCol;
 			do {
 				// we select a random tile...
-				int InitialTileRow = (int) (Math.random() * NumTileRows); //Tile row 
-				int InitialTileCol = (int) (Math.random() * NumTileCols); //Tile column
+				InitialTileRow = (int) (Math.random() * NumTileRows); //Tile row 
+				InitialTileCol = (int) (Math.random() * NumTileCols); //Tile column
 				
 				// ...and convert its coordinates to pixels
 				double InitialObstacleRow = InitialTileRow * TileSize + HalfTile ;
@@ -89,20 +94,30 @@ public class RouteFinder {
 				//store it on a temp RobotSetup object
 				TempValue= new RobotSetup(InitialObstacleRow, InitialObstacleCol, 0.0);
 
-			} while (false); //Arrays.asList(robotSetups).contains(TempValue));  // we check if the position has already been used before
+				// show tentative position 
+				System.out.println("Proposed Row: " + InitialTileRow);
+				System.out.println("Proposed Col: " + InitialTileCol);
+
+			} while (Arrays.asList(robotSetups).contains(TempValue));  	// we check if the position has already been used before
+																		//(this does not seem to work, as some tanks are placed out of the grid and heading randomly
+																		//possibly because they are created on top of a previously existing tank) 
+
+			// show final position 
+			System.out.println("Final Row: " + InitialTileRow);
+			System.out.println("Final Col: " + InitialTileCol);
+
 			
-			existingRobots[NdxObstacle] = modelRobots[0];
+			existingRobots[NdxObstacle] = modelRobots[0]; // we place a SittingDuck model robot (line 68)
 			robotSetups[NdxObstacle] = TempValue; //new RobotSetup(InitialObstacleRow, InitialObstacleCol, 0.0);
 			
 		}
-			
 			
 		
 		/********************************** Create the agent ************************************/
 		// Create the agent and place it in a random position without obstacle
 
-		existingRobots[NumObstacles] = modelRobots[0]; //NumObstacles + 1];
-		
+		existingRobots[NumObstacles] = modelRobots[0]; //NumObstacles + 1]; //line clipped as it didn't work, 
+																			//I guess it should be modelRobots[1], not modelRobots[NumObstacles + 1] 
 		
 		// place it in random position ...
 		RobotSetup TempValue;
@@ -118,8 +133,9 @@ public class RouteFinder {
 			//store it on a temp RobotSetup object
 			TempValue= new RobotSetup(InitialAgentRow, InitialAgentCol, 0.0);
 
-		} while (false);//Arrays.asList(robotSetups).contains(TempValue));  // we check if the position has already been used before		
-		
+		} while (Arrays.asList(robotSetups).contains(TempValue));  	// we check if the position has already been used before		
+																	//(this does not seem to work, as some tanks are placed out of the grid and heading randomly
+																	//possibly because they are created on top of a previously existing tank) 
 		//This positions the agent in the initial position
 		robotSetups[NumObstacles] = TempValue; /*new RobotSetup(InitialAgentRow, InitialAgentCol, 0.0);*/
 		/************************* Create and run the battle *************************************/
@@ -137,7 +153,7 @@ public class RouteFinder {
 		// Run our specified battle and let it run till it is over
 		engine.runBattle(battleSpec, true); 	// waits till the battle finishes
 		
-		/******************************** Finalize Robocode *************s************************/
+		/******************************** Finalize Robocode *************************************/
 		
 		// Cleanup our RobocodeEngine
 		engine.close();
