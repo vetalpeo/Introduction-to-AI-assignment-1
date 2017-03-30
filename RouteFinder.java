@@ -1,5 +1,6 @@
 package mainprogram;
 
+
 import java.util.Arrays;
 
 import robocode.control.BattleSpecification;
@@ -12,9 +13,27 @@ public class RouteFinder {
 
 	private static final String ROBOCODEPATH = "/robocode";
 	
+	public static boolean PositionIsOccupied (RobotSetup[] positions, RobotSetup newElement) {
+		
+		//calculate the number of occupied spaces in the array
+		int nElements = 0;
+		for (int i = 0; i < positions.length; i ++)
+		    if (positions[i] != null)
+		        nElements ++;
+		
+		//we check if all elements in the array are different to the new proposed element  
+		for(int i=0; i<nElements; i++){
+			if((positions[i].getX() == newElement.getX()) && (positions[i].getY() == newElement.getY() ))
+				return true;
+		}
+		return false;
+	}			
 	
 	public static void main(String[] args) {
+
+
 		
+
 		/******************************** Inizialize Robocode *************s************************/
 		
 		// Create the RobocodeEngine
@@ -98,11 +117,8 @@ public class RouteFinder {
 				System.out.println("Proposed Row: " + InitialTileRow);
 				System.out.println("Proposed Col: " + InitialTileCol);
 
-			} while (Arrays.asList(robotSetups).contains(TempValue));  	// we check if the position has already been used before
-																		//(this does not seem to work, as some tanks are placed out of the grid and heading randomly
-																		//possibly because they are created on top of a previously existing tank) 
-
-			// show final position 
+			} while (PositionIsOccupied(robotSetups,TempValue)); 	// we check if the position has already been used before
+				//show final position												
 			System.out.println("Final Row: " + InitialTileRow);
 			System.out.println("Final Col: " + InitialTileCol);
 
